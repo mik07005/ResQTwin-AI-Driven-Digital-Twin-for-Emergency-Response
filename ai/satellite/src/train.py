@@ -21,9 +21,8 @@ SEED = 42
 BATCH_SIZE = 4
 LEARNING_RATE = 1e-3
 
-# Smoke-test value for now.
-# We will change this after verifying the final pipeline.
-EPOCHS = 2
+# Baseline training configuration.
+EPOCHS = 50
 
 NUM_WORKERS = 0
 
