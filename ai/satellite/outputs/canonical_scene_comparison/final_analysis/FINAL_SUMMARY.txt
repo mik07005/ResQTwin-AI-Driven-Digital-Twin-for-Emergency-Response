@@ -1,0 +1,24 @@
+ResQTwin Satellite Segmentation - Final Analysis
+=======================================================
+
+Candidate configuration: Positive Weight = 5, threshold = 0.80
+
+Flood scenes analysed: 82
+Scenes improved: 43/82 (52.44%)
+Scenes worsened: 36/82 (43.90%)
+Median IoU change: +0.26 pp
+Mean IoU change: +0.56 pp
+
+Global metrics:
+Baseline IoU: 65.12%
+PW5 IoU: 66.03%
+Baseline Dice: 78.88%
+PW5 Dice: 79.54%
+Baseline Precision: 74.75%
+PW5 Precision: 76.99%
+Baseline Recall: 83.49%
+PW5 Recall: 82.26%
+
+No-flood pixel-level FPR:
+Baseline: 1.2897%
+PW5: 1.1964%
