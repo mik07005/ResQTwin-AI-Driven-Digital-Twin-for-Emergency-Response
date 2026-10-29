@@ -1,0 +1,85 @@
+﻿{
+    "model_name":  "ResQTwin Environmental Flood-Risk Model",
+    "model_version":  "0.1.0-design",
+    "status":  "design_only_not_yet_implemented",
+    "study_area":  "Chennai, Tamil Nadu, India",
+    "prediction_target":  {
+                              "name":  "environmental_flood_risk_score",
+                              "horizon_hours":  6,
+                              "status":  "provisional",
+                              "interpretation":  "Uncalibrated environmental risk score, not a flood probability or a validated forecast."
+                          },
+    "input":  {
+                  "observed_rainfall":  {
+                                            "type":  "array",
+                                            "item_fields":  {
+                                                                "station_id":  "string",
+                                                                "latitude":  "number",
+                                                                "longitude":  "number",
+                                                                "timestamp":  "ISO-8601 datetime with timezone",
+                                                                "rainfall_mm":  "number or null"
+                                                            },
+                                            "missing_data_policy":  "Preserve missing observations; never convert missing rainfall to zero. Include observation age and coverage."
+                                        },
+                  "weather_forecast":  {
+                                           "type":  "array",
+                                           "item_fields":  {
+                                                               "timestamp":  "ISO-8601 datetime with timezone",
+                                                               "precipitation_mm":  "number or null",
+                                                               "precipitation_probability_percent":  "number or null"
+                                                           },
+                                           "source":  "Open-Meteo forecast API, subject to runtime availability"
+                                       },
+                  "spatial_context":  {
+                                          "ward_id":  "string or null",
+                                          "latitude":  "number or null",
+                                          "longitude":  "number or null"
+                                      },
+                  "metadata":  {
+                                   "prediction_timestamp":  "ISO-8601 datetime with timezone",
+                                   "input_source_timestamps":  "object",
+                                   "data_quality_flags":  "array of strings"
+                               }
+              },
+    "output":  {
+                   "prediction_timestamp":  "ISO-8601 datetime with timezone",
+                   "target_horizon_hours":  "number",
+                   "location_id":  "string or null",
+                   "environmental_risk_score":  "number from 0 to 100, if calculable",
+                   "risk_category":  "low, moderate, high, very_high, or unavailable",
+                   "contributing_factors":  "array of strings",
+                   "uncertainty_status":  "string",
+                   "data_freshness":  "object",
+                   "missing_inputs":  "array of strings",
+                   "warnings":  "array of strings",
+                   "model_version":  "string",
+                   "suspicious_readings_ignored":  "integer count of extreme rainfall readings excluded from scoring",
+                   "interpretation":  "statement that the score is experimental and is not a calibrated flood probability or validated flood forecast"
+               },
+    "safety_and_validity_rules":  [
+                                      "Do not label the score as a probability of flooding.",
+                                      "Do not claim supervised flood prediction without suitable independent flood labels.",
+                                      "Do not treat missing or stale observations as zero rainfall.",
+                                      "Flag the seven rainfall readings above 100 mm for investigation.",
+                                      "Do not silently delete, cap, or alter suspicious source readings.",
+                                      "Do not infer ward-level inundation directly from a nearby rain gauge.",
+                                      "Mark the prediction unavailable when required inputs are inadequate.",
+                                      "Keep environmental risk separate from Sentinel-1 observed inundation evidence."
+                                  ],
+    "evaluation_plan":  {
+                            "initial_baseline":  "Transparent, documented rule-based score",
+                            "data_quality_checks":  [
+                                                        "Timestamp validity and timezone consistency",
+                                                        "Observation freshness and coverage",
+                                                        "Missing-input handling",
+                                                        "Extreme-value flags",
+                                                        "Reproducibility"
+                                                    ],
+                            "flood_validation":  "Pending discovery of reliable, independent, time-stamped Chennai flood outcomes. Do not report flood prediction accuracy before suitable evaluation data is available."
+                        },
+    "integration":  {
+                        "runs_independently_of_satellite_unet":  true,
+                        "fusion_layer_required":  true,
+                        "fusion_rule":  "Keep environmental risk and satellite inundation evidence as separate signals; do not blindly average their scores."
+                    }
+}
