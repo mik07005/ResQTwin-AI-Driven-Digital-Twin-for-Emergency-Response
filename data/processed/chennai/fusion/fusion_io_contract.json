@@ -1,0 +1,115 @@
+﻿
+{
+  "fusion_name": "ResQTwin Uncertainty-Aware Flood Intelligence Fusion",
+  "fusion_version": "0.1.0",
+  "status": "implementation_completed_testing_passed",
+  "study_area": "Chennai, Tamil Nadu, India",
+  "implementation": {
+    "module": "ai/flood_prediction/src/fusion.py",
+    "entry_function": "fuse_assessments",
+    "automated_tests_passed": 27,
+    "real_data_integration": "passed",
+    "real_data_integration_scope": "satellite_only"
+  },
+  "inputs": {
+    "satellite_assessment": {
+      "required_fields": {
+        "probability_raster_path": "Path to single-band flood probability GeoTIFF",
+        "mask_raster_path": "Path to single-band binary flood mask GeoTIFF",
+        "inference_timestamp": "ISO-8601 datetime with timezone",
+        "threshold": "Number strictly between 0 and 1",
+        "model_version": "String identifying the satellite model"
+      },
+      "optional_fields": {
+        "acquisition_timestamp": "ISO-8601 datetime with timezone or null",
+        "crs": "Declared CRS string; validated against raster CRS when provided"
+      },
+      "validation": [
+        "Both raster files must exist.",
+        "Both rasters must contain exactly one band.",
+        "Both rasters must have a CRS.",
+        "Both rasters must have matching CRS, transform, width and height.",
+        "Valid probabilities must be between 0 and 1.",
+        "Valid mask values must be 0 or 1.",
+        "The binary mask must match probability >= threshold.",
+        "At least one overlapping valid pixel must exist."
+      ]
+    },
+    "environmental_assessment": {
+      "source": "Output of assess_environmental_risk",
+      "required_fields": {
+        "environmental_risk_score": "Number from 0 to 100 or null",
+        "risk_category": "low, moderate, high, very_high or unavailable",
+        "prediction_timestamp": "ISO-8601 datetime with timezone"
+      },
+      "optional_fields": {
+        "uncertainty_status": "String",
+        "data_freshness": "Object",
+        "missing_inputs": "Array",
+        "warnings": "Array"
+      },
+      "validation": [
+        "Environmental score must be numeric or null.",
+        "Non-null scores must be between 0 and 100.",
+        "Risk category must match the score.",
+        "Prediction timestamp must include a timezone."
+      ]
+    },
+    "fusion_timestamp": "Optional ISO-8601 datetime with timezone; defaults to current UTC time"
+  },
+  "output": {
+    "fusion_timestamp": "ISO-8601 datetime with timezone",
+    "fusion_version": "String",
+    "satellite_inundation": {
+      "availability": "available",
+      "inference_timestamp": "ISO-8601 datetime with timezone",
+      "acquisition_timestamp": "ISO-8601 datetime with timezone or null",
+      "age_since_inference_hours": "Number",
+      "freshness_status": "not_assessed_no_validated_threshold",
+      "crs": "String",
+      "width": "Integer",
+      "height": "Integer",
+      "valid_pixel_count": "Integer",
+      "flooded_pixel_count": "Integer",
+      "flooded_pixel_fraction": "Number",
+      "mean_flood_probability": "Number",
+      "maximum_flood_probability": "Number",
+      "threshold": "Number",
+      "model_version": "String",
+      "pixel_area_map_units_squared": "Number",
+      "validity_note": "String"
+    },
+    "environmental_risk": "Environmental assessment object or null",
+    "overall_status": "both_sources_available, satellite_only, environmental_only, insufficient_data or temporal_validation_required",
+    "uncertainty_status": "source_uncertainties_preserved_no_combined_probability",
+    "data_quality": {
+      "satellite_available": "Boolean",
+      "environmental_assessment_provided": "Boolean",
+      "warnings_count": "Integer"
+    },
+    "warnings": "Array of strings",
+    "interpretation": "String"
+  },
+  "fusion_rules": [
+    "Keep satellite inundation and environmental risk as separate evidence streams.",
+    "Never blindly average the two model outputs.",
+    "Never produce an uncalibrated combined flood probability or overall risk score.",
+    "Preserve missing input and source uncertainty information.",
+    "Validate raster CRS, dimensions, transforms and geospatial alignment.",
+    "Validate consistency between the satellite probability raster and binary mask.",
+    "Do not claim satellite freshness without a validated freshness threshold.",
+    "Do not infer acquisition time from filesystem modification time.",
+    "Flag future satellite inference timestamps for temporal validation.",
+    "Do not infer ward-level inundation without appropriate spatial analysis.",
+    "Satellite raster statistics describe overlapping valid pixels only."
+  ],
+  "known_limitations": [
+    "Satellite freshness threshold has not been validated.",
+    "Acquisition timestamp may be unavailable.",
+    "Filesystem modification time is not a verified inference or acquisition timestamp.",
+    "Spatial and temporal alignment between satellite and environmental evidence has not been established.",
+    "Real-data integration has currently been validated using satellite-only input.",
+    "Environmental risk baseline is experimental and has not been validated against independent flood-event ground truth.",
+    "Flooded pixel fraction applies only to valid raster coverage, not the entire Chennai study area."
+  ]
+}
