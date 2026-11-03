@@ -82,5 +82,32 @@ class EnvironmentalRiskTests(unittest.TestCase):
             )
 
 
+    def test_probability_without_precipitation_returns_unavailable(self):
+        forecast = [{
+            "timestamp": self.ts(3),
+            "precipitation_mm": None,
+            "precipitation_probability_percent": 80,
+        }]
+        result = self.assess(self.observation(), forecast)
+
+        self.assertIsNone(result["environmental_risk_score"])
+        self.assertEqual(result["risk_category"], "unavailable")
+
+    def test_negative_forecast_precipitation_is_ignored(self):
+        forecast = [{
+            "timestamp": self.ts(3),
+            "precipitation_mm": -5.0,
+            "precipitation_probability_percent": 80,
+        }]
+        result = self.assess(self.observation(), forecast)
+
+        self.assertIsNone(result["environmental_risk_score"])
+        self.assertEqual(result["risk_category"], "unavailable")
+        self.assertTrue(
+            any("Negative forecast precipitation" in warning
+                for warning in result["warnings"])
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

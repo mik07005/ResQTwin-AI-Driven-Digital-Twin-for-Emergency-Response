@@ -21,11 +21,13 @@ Rainfall telemetry is available in:
 
 ### Current scoring approach
 
+
 The implementation uses a provisional six-hour forecast horizon:
 
 - Recent accepted rainfall contributes up to 40 points, scaled against 20 mm.
 - Forecast precipitation within the six-hour horizon contributes up to 40 points, scaled against 30 mm.
 - The maximum supplied precipitation probability contributes up to 20 points.
+- Precipitation probability is optional. If unavailable, its contribution is omitted, and the maximum attainable score becomes 80.
 
 The score is clipped to 0–100. Provisional categories are:
 
@@ -33,17 +35,24 @@ The score is clipped to 0–100. Provisional categories are:
 - Moderate: 25 to below 50
 - High: 50 to below 75
 - Very high: 75 and above
+- Unavailable: required inputs are inadequate, invalid or stale.
 
 These thresholds are engineering heuristics. They have not been calibrated against independent flood-event labels.
 
 ### Data-quality handling
 
+
 - Missing or invalid rainfall observations do not count as zero rainfall.
-- Stale rainfall observations make the score unavailable.
+- Stale rainfall observations (older than three hours) make the assessment unavailable.
 - Forecast records must fall strictly after the prediction time and within the six-hour horizon.
+- At least one valid forecast precipitation measurement is required within the six-hour horizon.
+- Missing forecast precipitation is never silently converted to zero.
+- Missing precipitation probability is permitted; its scoring contribution is omitted.
+- Forecast records containing negative precipitation are rejected.
 - Rainfall readings above the current 100 mm screening threshold are flagged and excluded from scoring pending verification.
 - Missing inputs and warnings are returned explicitly.
 - The source telemetry is preserved; the audit does not silently rewrite original readings.
+
 
 ### Current data limitations
 
@@ -272,11 +281,13 @@ python -m unittest discover -s ai/flood_prediction/tests -v
 
 ### Current test results
 
+
 | Test module | Tests passed |
 |---|---:|
-| Environmental risk | 8 |
+| Environmental risk | 10 |
 | Fusion | 19 |
-| **Total** | **27** |
+| **Total** | **29** |
+
 
 The suite covers:
 
