@@ -2,7 +2,9 @@
 """Reusable flood inference for two-band Sentinel-1 VV/VH GeoTIFF scenes."""
 
 import argparse
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -84,6 +86,7 @@ def main():
         raise ValueError("--threshold must be between 0 and 1.")
     if args.batch_size < 1:
         raise ValueError("--batch-size must be at least 1.")
+    inference_started_at = datetime.now(timezone.utc)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     probability_path = args.output_dir / "flood_probability.tif"
@@ -212,6 +215,58 @@ def main():
         with rasterio.open(mask_path, "w", **mask_profile) as dst:
             dst.write(flood_mask, 1)
             dst.set_band_description(1, "Flood mask: 0=non-flood, 1=flood, 255=NoData")
+        inference_completed_at = datetime.now(timezone.utc)
+
+    with rasterio.open(args.input) as src:
+        scene_metadata = {
+            "crs": src.crs.to_string(),
+            "width": src.width,
+            "height": src.height,
+            "transform": list(src.transform),
+            "pixel_size": [
+                abs(src.transform.a),
+                abs(src.transform.e)
+            ]
+        }
+
+    metadata = {
+        "inference_started_at": inference_started_at.isoformat(),
+        "inference_completed_at": inference_completed_at.isoformat(),
+        "inference_duration_seconds": round(
+            (inference_completed_at - inference_started_at).total_seconds(), 2
+        ),
+        "input_scene": str(args.input.resolve()),
+        "acquisition_timestamp": None,
+        "acquisition_timestamp_status": "unknown_not_present_in_source_metadata",
+        "checkpoint": str(args.checkpoint.resolve()),
+        "model_version": "resqtwin-unet-0.1.0",
+        "model_architecture": {
+            "name": "UNet",
+            "in_channels": 2,
+            "out_channels": 1
+        },
+        "threshold": args.threshold,
+        "batch_size": args.batch_size,
+        "tile_size": TILE_SIZE,
+        "overlap": OVERLAP,
+        "model_input_bands": {
+            "band_1": "VV",
+            "band_2": "VH"
+        },
+        "scene_metadata": scene_metadata,
+        "outputs": {
+            "probability_raster": str(probability_path.resolve()),
+            "mask_raster": str(mask_path.resolve())
+        }
+    }
+
+    metadata_path = args.output_dir / "inference_metadata.json"
+
+    with open(metadata_path, "w", encoding="utf-8") as metadata_file:
+        json.dump(metadata, metadata_file, indent=4)
+
+    print("Metadata output:", metadata_path)
+
 
     n_valid = int(valid_output.sum())
     n_flood = int((flood_mask[valid_output] == 1).sum())
